@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Ficha Criminal</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        
+        <div class="panel left-panel">
+            <textarea id="criminal-file" placeholder="Ficha Criminal"></textarea>
+            <div class="file-buttons">
+                </div>
+        </div>
+        
+        <div class="panel center-panel">
+            <div class="logo-box">
+                <img src="logooab.png" alt="Logo da OAB">
+            </div>
+            <textarea id="report-output" placeholder="Relatório" readonly></textarea>
+        </div>
+        
+        <div class="panel right-panel">
+            <div class="info-group">
+                <label>Solicitante:</label>
+                <input type="text" id="solicitante-name" placeholder="Nome">
+                <label>RG (ID):</label>
+                <input type="text" id="solicitante-rg" placeholder="ID">
+                <label>Telefone:</label>
+                <input type="text" id="solicitante-phone" placeholder="000-000">
+                <label>Valor Total:</label>
+                <input type="text" id="total-value" placeholder="R$0,00" readonly>
+            </div>
+            <div class="action-buttons">
+                <button id="add-file">Adicionar Ficha</button>
+                <button id="generate-report">Gerar Relatório</button>
+                <button id="copy-text">Copiar</button>
+                <button id="delete-files">Deletar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="app-footer">
+        Calculadora de Ficha Criminal・Criada por Santino
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
