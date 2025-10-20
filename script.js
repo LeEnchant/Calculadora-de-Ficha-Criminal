@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let filesData = [];
     let mainFileContent = '';
-    const COST_PER_ARTICLE = 140000;
+    const COST_PER_ARTICLE = 200000;
 
     // Função para reindexar as fichas (garante numeração 1ª, 2ª, etc.)
     function reindexFiles() {
@@ -228,4 +228,5 @@ VALOR TOTAL: R$${totalValueForReport}
         fileButtonsContainer.innerHTML = '';
         alert("Todos os dados foram deletados.");
     });
+
 });
