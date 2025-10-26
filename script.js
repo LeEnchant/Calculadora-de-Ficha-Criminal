@@ -137,7 +137,7 @@ SOLICITANTE: ${solicitanteNameInput.value}
 RG: ${solicitanteRgInput.value} 
 TELEFONE: ${solicitantePhoneInput.value} 
 
-HONORÁRIOS: ${formatCurrency(rawFeesValue)}
+VALOR TOTAL: ${formatCurrency(rawTotalValue)}
 
 `;
 
@@ -221,4 +221,5 @@ HONORÁRIOS: ${formatCurrency(rawFeesValue)}
         alert("Todos os dados foram deletados.");
     });
 });
+
 
