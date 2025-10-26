@@ -138,8 +138,6 @@ RG: ${solicitanteRgInput.value}
 TELEFONE: ${solicitantePhoneInput.value} 
 
 HONORÁRIOS: ${formatCurrency(rawFeesValue)}
-DEPÓSITO: ${formatCurrency(rawDepositValue)}
-VALOR TOTAL: ${formatCurrency(rawTotalValue)}
 
 `;
 
@@ -223,3 +221,4 @@ VALOR TOTAL: ${formatCurrency(rawTotalValue)}
         alert("Todos os dados foram deletados.");
     });
 });
+
