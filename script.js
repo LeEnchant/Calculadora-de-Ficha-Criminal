@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const solicitanteNameInput = document.getElementById('solicitante-name');
     const solicitanteRgInput = document.getElementById('solicitante-rg');
     const solicitantePhoneInput = document.getElementById('solicitante-phone');
+    const feesInput = document.getElementById('fees');
+    const depositInput = document.getElementById('deposit');
     const totalValueInput = document.getElementById('total-value');
     const generateReportBtn = document.getElementById('generate-report');
     const copyTextBtn = document.getElementById('copy-text');
@@ -14,8 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let filesData = [];
     let mainFileContent = '';
     const COST_PER_ARTICLE = 200000;
+    const DEPOSIT_PER_ARTICLE = 44000;
 
-    // Função para reindexar as fichas (garante numeração 1ª, 2ª, etc.)
+    // Reindexa as fichas
     function reindexFiles() {
         filesData.forEach((file, index) => {
             file.id = index + 1;
@@ -23,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showFileButtons();
     }
 
-    // Lógica para mostrar os botões de ficha e deletar
+    // Mostra botões de fichas
     function showFileButtons() {
         fileButtonsContainer.innerHTML = '';
         filesData.forEach(file => {
@@ -45,9 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.addEventListener('click', () => {
                 filesData = filesData.filter(f => f.id !== file.id);
                 criminalFileTextarea.value = '';
-                
                 reindexFiles(); 
-                
                 generateReport();
             });
 
@@ -78,14 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filesData.push({ id: 0, content: textToSave }); 
         criminalFileTextarea.value = '';
-        
         reindexFiles();
     });
 
-    // Função dedicada para gerar o relatório e calcular o valor total
+    // Gera relatório e cálculos
     function generateReport() {
         if (filesData.length === 0) {
-            totalValueInput.value = '0,00'; 
+            feesInput.value = 'R$0,00';
+            depositInput.value = 'R$0,00';
+            totalValueInput.value = 'R$0,00'; 
             reportOutputTextarea.value = '';
             return;
         }
@@ -93,12 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalArticles = 0;
         let fileReports = [];
 
-        // 1. Processa todas as fichas e calcula o total de artigos
+        // Conta os artigos
         filesData.forEach(file => {
             const report = extractData(file.content);
             totalArticles += report.articlesCount;
-            
-            // Adiciona o novo formato de artigo, usando a propriedade formattedArticles
             fileReports.push(`
  ━━━━━━━━✧ • ✧━━━━━━━
 Oficial: ${report.official} 
@@ -110,19 +110,24 @@ Data: ${report.date}
 `);
         });
 
-        // 2. Calcula o valor total e formata APENAS O NÚMERO
-        const rawTotalValue = totalArticles * COST_PER_ARTICLE;
-        
-        const totalValueForReport = rawTotalValue.toLocaleString('pt-BR', {
-            style: 'decimal', 
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+        // --- CÁLCULOS PRINCIPAIS ---
+        const rawTotalValue = totalArticles * COST_PER_ARTICLE; // Total
+        const rawDepositValue = totalArticles * DEPOSIT_PER_ARTICLE; // Depósito
+        const rawFeesValue = rawTotalValue - rawDepositValue; // Honorários
+
+        // Formatação de moeda
+        const formatCurrency = (value) => value.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2
         });
 
-        // 3. Atualiza o campo de input na interface
-        totalValueInput.value = totalValueForReport;
-        
-        // 4. Constrói o template, substituindo "R$:" por "VALOR TOTAL:"
+        // Atualiza campos
+        feesInput.value = formatCurrency(rawFeesValue);
+        depositInput.value = formatCurrency(rawDepositValue);
+        totalValueInput.value = formatCurrency(rawTotalValue);
+
+        // Template do relatório
         const reportTemplate = `
  ━━━━━━━━✧ • ✧━━━━━━━━ 
     ⚖️ LIMPEZA DE FICHA ⚖️
@@ -131,15 +136,17 @@ Data: ${report.date}
 SOLICITANTE: ${solicitanteNameInput.value} 
 RG: ${solicitanteRgInput.value} 
 TELEFONE: ${solicitantePhoneInput.value} 
-VALOR TOTAL: R$${totalValueForReport}
+
+HONORÁRIOS: ${formatCurrency(rawFeesValue)}
+DEPÓSITO: ${formatCurrency(rawDepositValue)}
+VALOR TOTAL: ${formatCurrency(rawTotalValue)}
 
 `;
 
         const finalReport = reportTemplate + fileReports.join('\n');
         reportOutputTextarea.value = finalReport;
     }
-    
-    // Chama a função dedicada ao clicar no botão
+
     generateReportBtn.addEventListener('click', () => {
         if (filesData.length === 0) {
             alert("Adicione pelo menos uma ficha para gerar o relatório.");
@@ -148,7 +155,7 @@ VALOR TOTAL: R$${totalValueForReport}
         generateReport();
     });
 
-    // Extração e Formatação de Dados
+    // Extração dos dados
     function extractData(text) {
         const lines = text.split('\n');
         let official = '';
@@ -156,7 +163,6 @@ VALOR TOTAL: R$${totalValueForReport}
         let totalFine = '';
         let date = '';
         let articlesCount = 0;
-        // Novo array para armazenar as linhas formatadas de cada artigo
         let formattedArticlesList = [];
         
         lines.forEach(line => {
@@ -171,62 +177,49 @@ VALOR TOTAL: R$${totalValueForReport}
             } else if (line.includes('Sistema de Calculadora Penal -')) {
                 const datePart = line.split(' - ')[1]?.trim() || '';
                 const parts = datePart.split(',');
-                if (parts.length > 1) {
-                    date = parts[0].trim() + ' ' + parts[1].trim();
-                } else {
-                    date = datePart;
-                }
-            } 
-            // CHAVE DA ALTERAÇÃO: Se a linha for um Artigo, salva ela inteira e conta.
-            else if (line.includes('Art.')) {
-                // A linha do artigo já está no formato desejado: Art. 143 - Desobediencia (tempo, multa)
+                date = parts.length > 1 ? parts[0].trim() + ' ' + parts[1].trim() : datePart;
+            } else if (line.includes('Art.')) {
                 formattedArticlesList.push(line.trim());
-                // Conta o artigo para o cálculo do valor total
                 articlesCount++;
             }
         });
 
         return {
-            official: official,
-            totalTime: totalTime,
-            totalFine: totalFine,
-            // Retorna a lista de artigos formatada, separada por quebras de linha
-            formattedArticles: formattedArticlesList.join('\n'), 
-            date: date,
-            articlesCount: articlesCount
+            official,
+            totalTime,
+            totalFine,
+            formattedArticles: formattedArticlesList.join('\n'),
+            date,
+            articlesCount
         };
     }
 
-    // Formatação de Telefone
+    // Máscara de telefone
     solicitantePhoneInput.addEventListener('input', (e) => {
         let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 6) {
-            value = value.slice(0, 6);
-        }
-        if (value.length > 3) {
-            e.target.value = value.slice(0, 3) + '-' + value.slice(3);
-        } else {
-            e.target.value = value;
-        }
+        if (value.length > 6) value = value.slice(0, 6);
+        e.target.value = value.length > 3 ? value.slice(0, 3) + '-' + value.slice(3) : value;
     });
 
+    // Copiar texto
     copyTextBtn.addEventListener('click', () => {
         reportOutputTextarea.select();
         document.execCommand('copy');
         alert("Relatório copiado para a área de transferência!");
     });
 
-    // Deleta todos os dados
+    // Deletar tudo
     deleteFilesBtn.addEventListener('click', () => {
         criminalFileTextarea.value = '';
         reportOutputTextarea.value = '';
         solicitanteNameInput.value = '';
         solicitanteRgInput.value = '';
         solicitantePhoneInput.value = '';
-        totalValueInput.value = '0,00'; 
+        feesInput.value = 'R$0,00';
+        depositInput.value = 'R$0,00';
+        totalValueInput.value = 'R$0,00'; 
         filesData = [];
         fileButtonsContainer.innerHTML = '';
         alert("Todos os dados foram deletados.");
     });
-
 });
