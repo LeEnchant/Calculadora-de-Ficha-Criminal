@@ -12,11 +12,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteFilesBtn = document.getElementById('delete-files');
     const fileButtonsContainer = document.querySelector('.file-buttons');
     const addFileBtn = document.getElementById('add-file');
-    
+
+    // Novo campo DIP
+    const dipInput = document.querySelectorAll('#fees')[1];
+
     let filesData = [];
     let mainFileContent = '';
-    const COST_PER_ARTICLE = 200000;
-    const DEPOSIT_PER_ARTICLE = 44000;
+
+    // Constantes de cálculo
+    const COST_PER_ARTICLE = 200000;   // Valor total por artigo
+    const DIP_PERCENTAGE = 0.3;        // 30% para a DIP
+    const DEPOSIT_PER_ARTICLE = 44000; // Depósito fixo por artigo
 
     // Reindexa as fichas
     function reindexFiles() {
@@ -30,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function showFileButtons() {
         fileButtonsContainer.innerHTML = '';
         filesData.forEach(file => {
-            const fileButtonWrapper = document.createElement('div');
-            fileButtonWrapper.className = 'file-button-wrapper';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'file-button-wrapper';
             
             const fileBtn = document.createElement('button');
             fileBtn.className = 'file-btn';
@@ -48,13 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
             deleteBtn.addEventListener('click', () => {
                 filesData = filesData.filter(f => f.id !== file.id);
                 criminalFileTextarea.value = '';
-                reindexFiles(); 
+                reindexFiles();
                 generateReport();
             });
 
-            fileButtonWrapper.appendChild(fileBtn);
-            fileButtonWrapper.appendChild(deleteBtn);
-            fileButtonsContainer.appendChild(fileButtonWrapper);
+            wrapper.appendChild(fileBtn);
+            wrapper.appendChild(deleteBtn);
+            fileButtonsContainer.appendChild(wrapper);
         });
     }
 
@@ -76,8 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Por favor, cole um texto na ficha criminal antes de adicionar.");
             return;
         }
-
-        filesData.push({ id: 0, content: textToSave }); 
+        filesData.push({ id: 0, content: textToSave });
         criminalFileTextarea.value = '';
         reindexFiles();
     });
@@ -86,8 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateReport() {
         if (filesData.length === 0) {
             feesInput.value = 'R$0,00';
+            dipInput.value = 'R$0,00';
             depositInput.value = 'R$0,00';
-            totalValueInput.value = 'R$0,00'; 
+            totalValueInput.value = 'R$0,00';
             reportOutputTextarea.value = '';
             return;
         }
@@ -95,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalArticles = 0;
         let fileReports = [];
 
-        // Conta os artigos
         filesData.forEach(file => {
             const report = extractData(file.content);
             totalArticles += report.articlesCount;
@@ -110,12 +115,13 @@ Data: ${report.date}
 `);
         });
 
-        // --- CÁLCULOS PRINCIPAIS ---
-        const rawTotalValue = totalArticles * COST_PER_ARTICLE; // Total
-        const rawDepositValue = totalArticles * DEPOSIT_PER_ARTICLE; // Depósito
-        const rawFeesValue = rawTotalValue - rawDepositValue; // Honorários
+        // --- CÁLCULOS ---
+        const totalValue = totalArticles * COST_PER_ARTICLE;            // 200K por artigo
+        const dipValue = totalValue * DIP_PERCENTAGE;                   // 30% para DIP
+        const oabValue = totalValue - dipValue;                         // 140K restantes
+        const depositValue = totalArticles * DEPOSIT_PER_ARTICLE;       // 44K por artigo
+        const feesValue = oabValue - depositValue;                      // Honorários = 96K por artigo
 
-        // Formatação de moeda
         const formatCurrency = (value) => value.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL',
@@ -123,9 +129,10 @@ Data: ${report.date}
         });
 
         // Atualiza campos
-        feesInput.value = formatCurrency(rawFeesValue);
-        depositInput.value = formatCurrency(rawDepositValue);
-        totalValueInput.value = formatCurrency(rawTotalValue);
+        feesInput.value = formatCurrency(feesValue);
+        dipInput.value = formatCurrency(dipValue);
+        depositInput.value = formatCurrency(depositValue);
+        totalValueInput.value = formatCurrency(totalValue);
 
         // Template do relatório
         const reportTemplate = `
@@ -136,7 +143,7 @@ Data: ${report.date}
 SOLICITANTE: ${solicitanteNameInput.value} 
 RG: ${solicitanteRgInput.value} 
 TELEFONE: ${solicitantePhoneInput.value} 
-VALOR TOTAL: ${formatCurrency(rawTotalValue)}
+VALOR TOTAL: ${formatCurrency(totalValue)}
 
 `;
 
@@ -152,26 +159,19 @@ VALOR TOTAL: ${formatCurrency(rawTotalValue)}
         generateReport();
     });
 
-    // Extração dos dados
+    // Extração de dados
     function extractData(text) {
         const lines = text.split('\n');
-        let official = '';
-        let totalTime = '';
-        let totalFine = '';
-        let date = '';
+        let official = '', totalTime = '', totalFine = '', date = '';
         let articlesCount = 0;
         let formattedArticlesList = [];
-        
+
         lines.forEach(line => {
-            if (line.includes('QRA Oficial:')) {
-                official = line.split('QRA Oficial: ')[1]?.trim() || '';
-            } else if (line.includes('Pena Final:')) {
-                totalTime = line.split('Pena Final: ')[1]?.trim() || '';
-            } else if (line.includes('Pena:')) {
-                totalTime = line.split('Pena: ')[1]?.trim() || '';
-            } else if (line.includes('Multa: R$')) {
-                totalFine = line.split('Multa: ')[1]?.trim() || '';
-            } else if (line.includes('Sistema de Calculadora Penal -')) {
+            if (line.includes('QRA Oficial:')) official = line.split('QRA Oficial: ')[1]?.trim() || '';
+            else if (line.includes('Pena Final:')) totalTime = line.split('Pena Final: ')[1]?.trim() || '';
+            else if (line.includes('Pena:')) totalTime = line.split('Pena: ')[1]?.trim() || '';
+            else if (line.includes('Multa: R$')) totalFine = line.split('Multa: ')[1]?.trim() || '';
+            else if (line.includes('Sistema de Calculadora Penal -')) {
                 const datePart = line.split(' - ')[1]?.trim() || '';
                 const parts = datePart.split(',');
                 date = parts.length > 1 ? parts[0].trim() + ' ' + parts[1].trim() : datePart;
@@ -181,14 +181,7 @@ VALOR TOTAL: ${formatCurrency(rawTotalValue)}
             }
         });
 
-        return {
-            official,
-            totalTime,
-            totalFine,
-            formattedArticles: formattedArticlesList.join('\n'),
-            date,
-            articlesCount
-        };
+        return { official, totalTime, totalFine, formattedArticles: formattedArticlesList.join('\n'), date, articlesCount };
     }
 
     // Máscara de telefone
@@ -213,13 +206,11 @@ VALOR TOTAL: ${formatCurrency(rawTotalValue)}
         solicitanteRgInput.value = '';
         solicitantePhoneInput.value = '';
         feesInput.value = 'R$0,00';
+        dipInput.value = 'R$0,00';
         depositInput.value = 'R$0,00';
-        totalValueInput.value = 'R$0,00'; 
+        totalValueInput.value = 'R$0,00';
         filesData = [];
         fileButtonsContainer.innerHTML = '';
         alert("Todos os dados foram deletados.");
     });
 });
-
-
-
