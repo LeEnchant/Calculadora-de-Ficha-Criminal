@@ -143,7 +143,7 @@ Data: ${report.date}
 SOLICITANTE: ${solicitanteNameInput.value} 
 RG: ${solicitanteRgInput.value} 
 TELEFONE: ${solicitantePhoneInput.value} 
-VALOR TOTAL: ${formatCurrency(totalValue)}
+VALOR TOTAL: ${formatCurrency(oabValue)}
 
 `;
 
@@ -214,3 +214,4 @@ VALOR TOTAL: ${formatCurrency(totalValue)}
         alert("Todos os dados foram deletados.");
     });
 });
+
