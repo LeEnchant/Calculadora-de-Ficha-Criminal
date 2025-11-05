@@ -132,7 +132,7 @@ Data: ${report.date}
         feesInput.value = formatCurrency(feesValue);
         dipInput.value = formatCurrency(dipValue);
         depositInput.value = formatCurrency(depositValue);
-        totalValueInput.value = formatCurrency(totalValue);
+        totalValueInput.value = formatCurrency(oabValue);
 
         // Template do relatório
         const reportTemplate = `
@@ -214,4 +214,5 @@ VALOR TOTAL: ${formatCurrency(oabValue)}
         alert("Todos os dados foram deletados.");
     });
 });
+
 
